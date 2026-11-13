@@ -28,7 +28,7 @@ urlpatterns = [
         LoginView.as_view(template_name='registration/login.html'),
         name='login',
     ),
-    path('accounts/logout/', LogoutView.as_view(), name='logout'),
+    path('accounts/logout/', LogoutView.as_view(next_page='login'), name='logout'),
     path('', include('control.urls')),
 ]
 
