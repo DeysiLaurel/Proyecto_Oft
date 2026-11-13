@@ -291,11 +291,11 @@
                             <p class="text-xs text-slate-500">{% if user.is_superuser %}Administrador{% else %}{{ user.get_rol_display }}{% endif %}</p>
                         </div>
                         <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-clinic-100 text-sm font-bold text-clinic-800 sm:hidden" aria-hidden="true">{{ user.first_name|default:user.username|slice:":1"|upper }}</span>
-                        <form method="post" action="{% url 'logout' %}">
+                        <form action="{% url 'logout' %}" method="post" class="m-0 inline-block">
                             {% csrf_token %}
                             <button type="submit" aria-label="Cerrar sesión" class="flex h-10 items-center gap-2 rounded-xl border border-slate-200 px-3 text-sm font-semibold text-slate-600 transition hover:border-clinic-200 hover:bg-clinic-50 hover:text-clinic-800">
                                 <span class="material-symbols-rounded text-[18px]" aria-hidden="true">logout</span>
-                                <span class="hidden xl:inline">Salir</span>
+                                <span class="hidden xl:inline">Cerrar sesión</span>
                             </button>
                         </form>
                     </div>
