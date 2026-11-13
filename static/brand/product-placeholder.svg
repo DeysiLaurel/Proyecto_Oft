@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 400" fill="none">
+  <rect width="640" height="400" rx="24" fill="#FFF1F2"/>
+  <path d="M286 118 352 156v88l-66 38-66-38v-88l66-38Z" stroke="#9D174D" stroke-opacity=".78" stroke-width="6" stroke-linejoin="round"/>
+  <path d="M236 200c12-21 29-31 50-31s38 10 50 31c-12 21-29 31-50 31s-38-10-50-31Z" stroke="#9D174D" stroke-opacity=".78" stroke-width="6"/>
+  <circle cx="286" cy="200" r="15" stroke="#F472B6" stroke-width="6"/>
+  <circle cx="286" cy="200" r="5" fill="#DB2777"/>
+  <path d="M286 118v18m66 20-16 9m16 79-16-9m-50 47v-18m-66-20 16-9m-16-79 16 9" stroke="#9D174D" stroke-opacity=".78" stroke-linecap="round" stroke-width="4"/>
+  <path d="M198 316h176" stroke="#FBCFE8" stroke-linecap="round" stroke-width="6"/>
+  <text x="286" y="350" fill="#9D174D" fill-opacity=".72" font-family="Arial,sans-serif" font-size="16" font-weight="600" text-anchor="middle" letter-spacing="3">OPTIVISION</text>
+</svg>
