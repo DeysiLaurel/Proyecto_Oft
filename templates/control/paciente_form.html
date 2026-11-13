@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+
+{% block title %}OptiVision{% endblock %}
+
+{% block content %}
+<section class="mx-auto max-w-3xl">
+    <a href="{% if paciente %}{% url 'control:paciente_detail' paciente.pk %}{% else %}{% url 'control:pacientes_list' %}{% endif %}" class="text-sm font-medium text-clinic-700 hover:text-clinic-900">Volver a pacientes</a>
+    <div class="mb-6 mt-4">
+        <p class="text-sm font-semibold uppercase tracking-wide text-clinic-700">Expediente clínico</p>
+        <h1 class="mt-1 text-3xl font-bold tracking-tight text-slate-900">{{ titulo }}</h1>
+        <p class="mt-2 text-sm text-slate-600">Completa los datos de identificación y contacto del paciente.</p>
+    </div>
+
+    <form method="post" class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-8">
+        {% csrf_token %}
+        {% if form.non_field_errors %}
+            <div class="mb-5 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">{{ form.non_field_errors }}</div>
+        {% endif %}
+
+        <div class="grid gap-x-5 gap-y-4 sm:grid-cols-2">
+            {% for field in form %}
+                <div class="{% if field.name == 'direccion' or field.name == 'historial_medico_previo' %}sm:col-span-2{% endif %}">
+                    <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-slate-700">{{ field.label }}</label>
+                    {{ field }}
+                    {% if field.help_text %}<p class="mt-1 text-xs text-slate-500">{{ field.help_text }}</p>{% endif %}
+                    {% for error in field.errors %}<p class="mt-1 text-sm text-red-600">{{ error }}</p>{% endfor %}
+                </div>
+            {% endfor %}
+        </div>
+
+        <div class="mt-8 flex flex-col-reverse gap-3 border-t border-slate-100 pt-5 sm:flex-row sm:justify-end">
+            <a href="{% if paciente %}{% url 'control:paciente_detail' paciente.pk %}{% else %}{% url 'control:pacientes_list' %}{% endif %}" class="rounded-lg border border-slate-300 px-4 py-2.5 text-center text-sm font-semibold text-slate-700 hover:bg-slate-50">Cancelar</a>
+            <button type="submit" class="rounded-lg bg-clinic-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-clinic-700">Guardar paciente</button>
+        </div>
+    </form>
+</section>
+{% endblock %}

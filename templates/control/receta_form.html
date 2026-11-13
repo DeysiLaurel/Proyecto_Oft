@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+
+{% block title %}OptiVision{% endblock %}
+
+{% block content %}
+<section class="mx-auto max-w-4xl">
+    <a href="{% url 'control:paciente_detail' consulta.paciente_id %}" class="text-sm font-medium text-clinic-700 hover:text-clinic-900">Volver a la ficha del paciente</a>
+    <div class="mb-6 mt-4">
+        <p class="text-sm font-semibold uppercase tracking-wide text-clinic-700">Prescripción óptica</p>
+        <h1 class="mt-1 text-3xl font-bold tracking-tight text-slate-900">{% if receta %}Editar receta oftalmológica{% else %}Registrar receta oftalmológica{% endif %}</h1>
+        <p class="mt-2 text-sm text-slate-600">{{ consulta.paciente.nombre }} {{ consulta.paciente.apellido }} · {{ consulta.oftalmologo }} · Consulta {{ consulta.fecha_atencion|date:"d/m/Y" }}</p>
+    </div>
+
+    <form method="post" class="space-y-5">
+        {% csrf_token %}
+        {% if form.non_field_errors %}<div class="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">{{ form.non_field_errors }}</div>{% endif %}
+        <section class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+            <div class="border-b border-slate-200 px-5 py-4">
+                <h2 class="font-semibold text-slate-900">Graduación por ojo</h2>
+                <p class="mt-1 text-sm text-slate-500">El eje debe estar entre 0° y 180°. Utiliza números decimales para esfera y cilindro.</p>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="min-w-full text-left">
+                    <thead class="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
+                        <tr><th class="px-5 py-3 font-semibold">Ojo</th><th class="px-5 py-3 font-semibold">Esfera</th><th class="px-5 py-3 font-semibold">Cilindro</th><th class="px-5 py-3 font-semibold">Eje (0–180°)</th></tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100">
+                        <tr>
+                            <th scope="row" class="whitespace-nowrap px-5 py-5 text-sm font-semibold text-slate-800">OD · Ojo derecho</th>
+                            {% for field in form %}
+                                {% if field.name == 'esfera_od' or field.name == 'cilindro_od' or field.name == 'eje_od' %}
+                                    <td class="min-w-40 px-5 py-4"><label for="{{ field.id_for_label }}" class="sr-only">{{ field.label }}</label>{{ field }}{% for error in field.errors %}<p class="mt-1 text-xs text-red-600">{{ error }}</p>{% endfor %}</td>
+                                {% endif %}
+                            {% endfor %}
+                        </tr>
+                        <tr>
+                            <th scope="row" class="whitespace-nowrap px-5 py-5 text-sm font-semibold text-slate-800">OI · Ojo izquierdo</th>
+                            {% for field in form %}
+                                {% if field.name == 'esfera_oi' or field.name == 'cilindro_oi' or field.name == 'eje_oi' %}
+                                    <td class="min-w-40 px-5 py-4"><label for="{{ field.id_for_label }}" class="sr-only">{{ field.label }}</label>{{ field }}{% for error in field.errors %}<p class="mt-1 text-xs text-red-600">{{ error }}</p>{% endfor %}</td>
+                                {% endif %}
+                            {% endfor %}
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+            <h2 class="font-semibold text-slate-900">Datos adicionales</h2>
+            <div class="mt-4 grid gap-4 sm:grid-cols-3">
+                {% for field in form %}
+                    {% if field.name == 'adicion' or field.name == 'distancia_pupilar' or field.name == 'tipo_lente_sugerido' %}
+                        <div class="{% if field.name == 'tipo_lente_sugerido' %}sm:col-span-3{% endif %}"><label for="{{ field.id_for_label }}" class="block text-sm font-medium text-slate-700">{{ field.label }}</label>{{ field }}{% for error in field.errors %}<p class="mt-1 text-sm text-red-600">{{ error }}</p>{% endfor %}</div>
+                    {% endif %}
+                {% endfor %}
+            </div>
+        </section>
+
+        <div class="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+            <a href="{% url 'control:paciente_detail' consulta.paciente_id %}" class="rounded-lg border border-slate-300 px-4 py-2.5 text-center text-sm font-semibold text-slate-700 hover:bg-slate-50">Cancelar</a>
+            <button type="submit" class="rounded-lg bg-clinic-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-clinic-700">{% if receta %}Guardar cambios{% else %}Guardar receta{% endif %}</button>
+        </div>
+    </form>
+</section>
+{% endblock %}

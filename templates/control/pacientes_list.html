@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+
+{% block title %}OptiVision{% endblock %}
+
+{% block content %}
+<section class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+    <div>
+        <p class="text-sm font-semibold uppercase tracking-wide text-clinic-700">Gestión clínica</p>
+        <h1 class="mt-1 text-3xl font-bold tracking-tight text-slate-900">Pacientes</h1>
+        <p class="mt-2 text-sm text-slate-600">Busca y administra los expedientes de pacientes.</p>
+    </div>
+    {% if user.rol == 'ADMINISTRADOR' or user.is_superuser %}
+        <a href="{% url 'control:paciente_create' %}" class="inline-flex items-center justify-center rounded-lg bg-clinic-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-clinic-700">
+            <span class="mr-2 text-lg leading-none" aria-hidden="true">+</span> Nuevo paciente
+        </a>
+    {% endif %}
+</section>
+
+<section class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+    <form method="get" class="flex flex-col gap-3 border-b border-slate-200 p-4 sm:flex-row">
+        <label for="patient-search" class="sr-only">Buscar por nombre, apellido o DNI</label>
+        <input id="patient-search" type="search" name="q" value="{{ query }}" placeholder="Buscar por nombre, apellido o DNI" class="min-w-0 flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-clinic-600 focus:ring-2 focus:ring-clinic-100">
+        <button type="submit" class="rounded-lg bg-[#0f52ba] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#012a6b]">Buscar</button>
+        {% if query %}
+            <a href="{% url 'control:pacientes_list' %}" class="rounded-lg border border-slate-300 px-4 py-2 text-center text-sm font-semibold text-slate-700 hover:bg-slate-50">Limpiar</a>
+        {% endif %}
+    </form>
+
+    <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-slate-200 text-left text-sm">
+            <thead class="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
+                <tr>
+                    <th scope="col" class="px-5 py-3 font-semibold">Paciente</th>
+                    <th scope="col" class="px-5 py-3 font-semibold">DNI</th>
+                    <th scope="col" class="px-5 py-3 font-semibold">Contacto</th>
+                    <th scope="col" class="px-5 py-3 text-right font-semibold">Acciones</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100">
+                {% for paciente in page_obj %}
+                    <tr class="hover:bg-slate-50/70">
+                        <td class="whitespace-nowrap px-5 py-4">
+                            {% if user.rol == 'ADMINISTRADOR' or user.is_superuser %}
+                                <a href="{% url 'control:paciente_detail' paciente.pk %}" class="font-semibold text-slate-900 hover:text-clinic-700">{{ paciente.nombre }} {{ paciente.apellido }}</a>
+                            {% else %}
+                                <span class="font-semibold text-slate-900">{{ paciente.nombre }} {{ paciente.apellido }}</span>
+                            {% endif %}
+                            <div class="mt-0.5 text-xs text-slate-500">Registrado {{ paciente.created_at|date:"d/m/Y" }}</div>
+                        </td>
+                        <td class="whitespace-nowrap px-5 py-4 text-slate-600">{{ paciente.dni }}</td>
+                        <td class="px-5 py-4 text-slate-600">
+                            <div>{{ paciente.telefono|default:"—" }}</div>
+                            <div class="text-xs text-slate-500">{{ paciente.email|default:"" }}</div>
+                        </td>
+                        <td class="whitespace-nowrap px-5 py-4 text-right">
+                            {% if user.rol == 'ADMINISTRADOR' or user.is_superuser %}
+                                <a href="{% url 'control:paciente_detail' paciente.pk %}" class="font-medium text-clinic-700 hover:text-clinic-900">Ver ficha</a>
+                                <a href="{% url 'control:paciente_update' paciente.pk %}" class="ml-3 font-medium text-slate-600 hover:text-slate-900">Editar</a>
+                                <form method="post" action="{% url 'control:paciente_delete' paciente.pk %}" class="ml-3 inline" onsubmit="return confirm('¿Eliminar definitivamente a este paciente? La acción no se puede deshacer.')">
+                                    {% csrf_token %}
+                                    <button type="submit" class="font-medium text-rose-700 hover:text-rose-900">Eliminar</button>
+                                </form>
+                            {% else %}
+                                <span class="text-xs text-slate-400">Acceso básico</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="4" class="px-5 py-12 text-center">
+                            <p class="font-medium text-slate-700">No se encontraron pacientes.</p>
+                            <p class="mt-1 text-sm text-slate-500">Prueba con otro nombre o DNI, o registra un paciente nuevo.</p>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {% if page_obj.paginator.num_pages > 1 %}
+        <nav class="flex items-center justify-between border-t border-slate-200 px-4 py-3 sm:px-5" aria-label="Paginación">
+            <span class="text-sm text-slate-500">Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</span>
+            <div class="flex gap-2">
+                {% if page_obj.has_previous %}
+                    <a href="?q={{ query|urlencode }}&page={{ page_obj.previous_page_number }}" class="rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50">Anterior</a>
+                {% endif %}
+                {% if page_obj.has_next %}
+                    <a href="?q={{ query|urlencode }}&page={{ page_obj.next_page_number }}" class="rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50">Siguiente</a>
+                {% endif %}
+            </div>
+        </nav>
+    {% endif %}
+</section>
+{% endblock %}

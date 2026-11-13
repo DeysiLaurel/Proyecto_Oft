@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+
+{% block title %}OptiVision{% endblock %}
+
+{% block content %}
+<section class="mx-auto max-w-3xl">
+    <a href="{% url 'control:citas_list' %}" class="text-sm font-medium text-clinic-700 hover:text-clinic-900">Volver a citas</a>
+    <div class="mb-6 mt-4">
+        <p class="text-sm font-semibold uppercase tracking-wide text-clinic-700">Agenda clínica</p>
+        <h1 class="mt-1 text-3xl font-bold tracking-tight text-slate-900">{{ titulo }}</h1>
+        <p class="mt-2 text-sm text-slate-600">Selecciona al paciente, al oftalmólogo y el horario de atención.</p>
+    </div>
+
+    <form method="post" class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-8">
+        {% csrf_token %}
+        {% if form.non_field_errors %}
+            <div class="mb-5 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">{{ form.non_field_errors }}</div>
+        {% endif %}
+        <div class="space-y-5">
+            {% for field in form %}
+                <div>
+                    <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-slate-700">{{ field.label }}</label>
+                    {{ field }}
+                    {% if field.help_text %}<p class="mt-1 text-xs text-slate-500">{{ field.help_text }}</p>{% endif %}
+                    {% for error in field.errors %}<p class="mt-1 text-sm text-red-600">{{ error }}</p>{% endfor %}
+                </div>
+            {% endfor %}
+        </div>
+        {% if not pacientes_activos %}
+            <p class="mt-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">Registra un paciente activo antes de agendar una cita.</p>
+        {% endif %}
+        {% if not oftalmologos_activos %}
+            <p class="mt-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">No hay oftalmólogos activos disponibles para seleccionar.</p>
+        {% endif %}
+        <div class="mt-8 flex flex-col-reverse gap-3 border-t border-slate-100 pt-5 sm:flex-row sm:justify-end">
+            <a href="{% url 'control:citas_list' %}" class="rounded-lg border border-slate-300 px-4 py-2.5 text-center text-sm font-semibold text-slate-700 hover:bg-slate-50">Cancelar</a>
+            <button type="submit" class="rounded-lg bg-clinic-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-clinic-700">Agendar cita</button>
+        </div>
+    </form>
+</section>
+{% endblock %}

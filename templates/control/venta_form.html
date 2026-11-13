@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+
+{% block title %}OptiVision{% endblock %}
+
+{% block content %}
+<section class="mx-auto max-w-5xl">
+    <a href="{% url 'control:ventas_list' %}" class="text-sm font-medium text-clinic-700 hover:text-clinic-900">Volver a ventas</a>
+    <div class="mb-6 mt-4">
+        <p class="text-sm font-semibold uppercase tracking-wide text-clinic-700">Ventas / POS</p>
+        <h1 class="mt-1 text-3xl font-bold tracking-tight text-slate-900">Registrar venta</h1>
+        <p class="mt-2 text-sm text-slate-600">Los precios se toman del inventario y el stock se descuenta al confirmar la operación.</p>
+    </div>
+    <form method="post" class="space-y-5">
+        {% csrf_token %}
+        {% if venta_form.non_field_errors %}<div class="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">{{ venta_form.non_field_errors }}</div>{% endif %}
+        {% if item_formset.non_form_errors %}<div class="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">{{ item_formset.non_form_errors }}</div>{% endif %}
+        <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+            <h2 class="font-semibold text-slate-900">Datos de la venta</h2>
+            <div class="mt-4 grid gap-4 sm:grid-cols-3">
+                {% for field in venta_form %}
+                    <div><label for="{{ field.id_for_label }}" class="block text-sm font-medium text-slate-700">{{ field.label }}</label>{{ field }}{% for error in field.errors %}<p class="mt-1 text-sm text-red-600">{{ error }}</p>{% endfor %}</div>
+                {% endfor %}
+            </div>
+            <p class="mt-3 text-xs text-slate-500">Cajero: {{ request.user.get_full_name|default:request.user.username }}</p>
+        </section>
+
+        <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+            <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div><h2 class="font-semibold text-slate-900">Productos</h2><p class="mt-1 text-sm text-slate-500">Selecciona cada producto una sola vez y define la cantidad.</p></div>
+                <button type="button" id="add-item" class="rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">+ Agregar producto</button>
+            </div>
+            {{ item_formset.management_form }}
+            <div id="items-container" class="mt-4 space-y-3">
+                {% for form in item_formset %}
+                    <div class="item-row grid gap-3 rounded-xl border border-slate-200 p-4 sm:grid-cols-[1fr_150px_auto] sm:items-end">
+                        {% for hidden in form.hidden_fields %}{{ hidden }}{% endfor %}
+                        <div><label for="{{ form.producto.id_for_label }}" class="block text-sm font-medium text-slate-700">{{ form.producto.label }}</label>{{ form.producto }}{% for error in form.producto.errors %}<p class="mt-1 text-sm text-red-600">{{ error }}</p>{% endfor %}</div>
+                        <div><label for="{{ form.cantidad.id_for_label }}" class="block text-sm font-medium text-slate-700">{{ form.cantidad.label }}</label>{{ form.cantidad }}{% for error in form.cantidad.errors %}<p class="mt-1 text-sm text-red-600">{{ error }}</p>{% endfor %}</div>
+                        {% if form.DELETE %}<div class="flex items-center gap-2 pb-2 text-sm text-slate-600">{{ form.DELETE }}<label for="{{ form.DELETE.id_for_label }}">Quitar</label></div>{% endif %}
+                    </div>
+                {% endfor %}
+            </div>
+            <template id="empty-item-template">
+                <div class="item-row grid gap-3 rounded-xl border border-slate-200 p-4 sm:grid-cols-[1fr_150px_auto] sm:items-end">
+                    <div><label class="block text-sm font-medium text-slate-700">Producto</label>{{ item_formset.empty_form.producto }}</div>
+                    <div><label class="block text-sm font-medium text-slate-700">Cantidad</label>{{ item_formset.empty_form.cantidad }}</div>
+                    <div class="flex items-center gap-2 pb-2 text-sm text-slate-600">{{ item_formset.empty_form.DELETE }}<label>Quitar</label></div>
+                </div>
+            </template>
+            <div class="mt-5 flex items-center justify-between border-t border-slate-100 pt-4">
+                <span class="text-sm font-medium text-slate-600">Total estimado</span>
+                <span id="sale-total" class="text-2xl font-bold text-slate-900">S/ 0.00</span>
+            </div>
+        </section>
+
+        <div class="flex flex-col-reverse justify-end gap-3 sm:flex-row">
+            <a href="{% url 'control:ventas_list' %}" class="rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-center text-sm font-semibold text-slate-700 hover:bg-slate-50">Cancelar</a>
+            <button type="submit" class="rounded-lg bg-clinic-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-clinic-700">Confirmar venta</button>
+        </div>
+    </form>
+</section>
+{{ precios_productos|json_script:"product-prices" }}
+{% endblock %}
+
+{% block scripts %}
+<script>
+    (() => {
+        const container = document.getElementById('items-container');
+        const template = document.getElementById('empty-item-template');
+        const totalForms = document.getElementById('id_items-TOTAL_FORMS');
+        const prices = JSON.parse(document.getElementById('product-prices').textContent);
+        const totalElement = document.getElementById('sale-total');
+
+        function updateTotal() {
+            let total = 0;
+            container.querySelectorAll('.item-row').forEach((row) => {
+                const product = row.querySelector('select');
+                const quantity = row.querySelector('input[type="number"]');
+                const deleted = row.querySelector('input[type="checkbox"]');
+                if (product && quantity && !deleted?.checked) {
+                    total += (Number(prices[product.value]) || 0) * (Number(quantity.value) || 0);
+                }
+            });
+            totalElement.textContent = `S/ ${total.toFixed(2)}`;
+        }
+
+        document.getElementById('add-item').addEventListener('click', () => {
+            const index = Number(totalForms.value);
+            const fragment = template.content.cloneNode(true);
+            fragment.querySelectorAll('[name], [id], label[for]').forEach((element) => {
+                if (element.name) element.name = element.name.replace(/items-__prefix__/g, `items-${index}`);
+                if (element.id) element.id = element.id.replace(/items-__prefix__/g, `items-${index}`);
+                if (element.htmlFor) element.htmlFor = element.htmlFor.replace(/items-__prefix__/g, `items-${index}`);
+            });
+            container.appendChild(fragment);
+            totalForms.value = index + 1;
+            updateTotal();
+        });
+
+        container.addEventListener('change', updateTotal);
+        container.addEventListener('input', updateTotal);
+        updateTotal();
+    })();
+</script>
+{% endblock %}

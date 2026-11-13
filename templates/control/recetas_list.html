@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+
+{% block title %}OptiVision{% endblock %}
+
+{% block content %}
+<section class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+    <div>
+        <p class="text-sm font-semibold uppercase tracking-wide text-clinic-700">Atención clínica</p>
+        <h1 class="mt-1 text-3xl font-bold tracking-tight text-slate-900">Recetas</h1>
+        <p class="mt-2 text-sm text-slate-600">Consulta las recetas oftalmológicas emitidas y su graduación.</p>
+    </div>
+</section>
+
+<section class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+    <form method="get" class="flex flex-col gap-3 border-b border-slate-200 p-4 sm:flex-row">
+        <label for="prescription-search" class="sr-only">Buscar receta</label>
+        <input id="prescription-search" type="search" name="q" value="{{ query }}" placeholder="Buscar por paciente, DNI u oftalmólogo" class="min-w-0 flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-clinic-600 focus:ring-2 focus:ring-clinic-100">
+        <button type="submit" class="rounded-lg bg-clinic-800 px-4 py-2 text-sm font-semibold text-white transition hover:bg-clinic-600">Buscar</button>
+        {% if query %}<a href="{% url 'control:recetas_list' %}" class="rounded-lg border border-slate-300 px-4 py-2 text-center text-sm font-semibold text-slate-700 hover:bg-slate-50">Limpiar</a>{% endif %}
+    </form>
+    <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-slate-200 text-left text-sm">
+            <thead class="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
+                <tr>
+                    <th class="px-5 py-3 font-semibold">Paciente</th>
+                    <th class="px-5 py-3 font-semibold">Oftalmólogo</th>
+                    <th class="px-5 py-3 font-semibold">Fecha</th>
+                    <th class="px-5 py-3 font-semibold">Graduación OD / OI</th>
+                    <th class="px-5 py-3 text-right font-semibold">Acción</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100">
+                {% for receta in page_obj %}
+                    <tr class="hover:bg-slate-50/70">
+                        <td class="px-5 py-4">
+                            <a href="{% url 'control:paciente_detail' receta.paciente_id %}" class="font-semibold text-slate-900 hover:text-clinic-700">{{ receta.paciente.nombre }} {{ receta.paciente.apellido }}</a>
+                            <div class="mt-0.5 text-xs text-slate-500">DNI {{ receta.paciente.dni }}</div>
+                        </td>
+                        <td class="px-5 py-4 text-slate-600">{{ receta.oftalmologo.nombre }} {{ receta.oftalmologo.apellido }}</td>
+                        <td class="whitespace-nowrap px-5 py-4 text-slate-600">{{ receta.fecha_emision|date:"d/m/Y" }}</td>
+                        <td class="whitespace-nowrap px-5 py-4 text-slate-600">{{ receta.esfera_od }} / {{ receta.esfera_oi }}</td>
+                        <td class="whitespace-nowrap px-5 py-4 text-right">
+                            <a href="{% url 'control:receta_print' receta.pk %}" class="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold text-clinic-800 hover:bg-clinic-50">
+                                <span class="material-symbols-rounded text-base" aria-hidden="true">print</span> Ver / imprimir
+                            </a>
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr><td colspan="5" class="px-5 py-12 text-center text-sm text-slate-500">No hay recetas registradas que coincidan con la búsqueda.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% if page_obj.has_other_pages %}
+        <nav class="flex items-center justify-between border-t border-slate-200 px-5 py-4 text-sm" aria-label="Paginación de recetas">
+            {% if page_obj.has_previous %}<a href="?q={{ query|urlencode }}&page={{ page_obj.previous_page_number }}" class="font-semibold text-clinic-700 hover:text-clinic-900">Anterior</a>{% else %}<span class="text-slate-400">Anterior</span>{% endif %}
+            <span class="text-slate-500">Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</span>
+            {% if page_obj.has_next %}<a href="?q={{ query|urlencode }}&page={{ page_obj.next_page_number }}" class="font-semibold text-clinic-700 hover:text-clinic-900">Siguiente</a>{% else %}<span class="text-slate-400">Siguiente</span>{% endif %}
+        </nav>
+    {% endif %}
+</section>
+{% endblock %}

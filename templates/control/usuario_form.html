@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="mx-auto max-w-3xl">
+    <a href="{% url 'control:usuarios_list' %}" class="text-sm font-medium text-clinic-700">Volver a usuarios</a>
+    <h1 class="mb-6 mt-4 text-3xl font-bold text-slate-900">{{ titulo }}</h1>
+    <form method="post" class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        {% csrf_token %}
+        {% if form.non_field_errors %}<div class="mb-4 rounded-lg bg-red-50 p-3 text-sm text-red-700">{{ form.non_field_errors }}</div>{% endif %}
+        <div class="grid gap-4 sm:grid-cols-2">
+            {% for field in form %}
+                <div>
+                    <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-slate-700">{{ field.label }}</label>{{ field }}
+                    {% for error in field.errors %}<p class="mt-1 text-xs text-red-600">{{ error }}</p>{% endfor %}
+                </div>
+            {% endfor %}
+        </div>
+        {% if usuario %}<p class="mt-4 text-xs text-slate-500">Para cambiar la contraseña, usa el proceso de restablecimiento de credenciales del administrador.</p>{% endif %}
+        <div class="mt-7 flex justify-end gap-3 border-t border-slate-100 pt-5">
+            <a href="{% url 'control:usuarios_list' %}" class="rounded-lg border border-slate-300 px-4 py-2.5 text-sm font-semibold text-slate-700">Cancelar</a>
+            <button type="submit" class="rounded-lg bg-clinic-800 px-4 py-2.5 text-sm font-semibold text-white hover:bg-clinic-600">Guardar usuario</button>
+        </div>
+    </form>
+</section>
+{% endblock %}

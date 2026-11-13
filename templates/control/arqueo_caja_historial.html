@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+    <div>
+        <p class="text-sm font-semibold uppercase tracking-wide text-clinic-700">Administración</p>
+        <h1 class="mt-1 text-3xl font-bold tracking-tight text-slate-900">Historial de arqueos de caja</h1>
+        <p class="mt-2 text-sm text-slate-600">Cierres registrados para revisión y auditoría contable.</p>
+    </div>
+    <a href="{% url 'control:arqueo_caja' %}" class="rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50">Ir a caja</a>
+</section>
+
+<section class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+    <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-slate-200 text-left text-sm">
+            <thead class="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
+                <tr>
+                    <th class="px-5 py-3">Cajero</th>
+                    <th class="px-5 py-3">Apertura</th>
+                    <th class="px-5 py-3">Cierre</th>
+                    <th class="px-5 py-3">Monto inicial</th>
+                    <th class="px-5 py-3">Efectivo</th>
+                    <th class="px-5 py-3">Tarjeta</th>
+                    <th class="px-5 py-3">Yape / Plin</th>
+                    <th class="px-5 py-3">Monto real</th>
+                    <th class="px-5 py-3">Diferencia</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100">
+                {% for arqueo in page_obj %}
+                    <tr class="transition hover:bg-slate-50">
+                        <td class="whitespace-nowrap px-5 py-4 font-medium text-slate-800">{{ arqueo.usuario.get_full_name|default:arqueo.usuario.username }}</td>
+                        <td class="whitespace-nowrap px-5 py-4 text-slate-600">{{ arqueo.fecha_apertura|date:"d/m/Y H:i" }}</td>
+                        <td class="whitespace-nowrap px-5 py-4 text-slate-600">{{ arqueo.fecha_cierre|date:"d/m/Y H:i" }}</td>
+                        <td class="whitespace-nowrap px-5 py-4 text-slate-600">S/ {{ arqueo.monto_inicial|floatformat:2 }}</td>
+                        <td class="whitespace-nowrap px-5 py-4 text-slate-600">S/ {{ arqueo.total_efectivo_ventas|floatformat:2 }}</td>
+                        <td class="whitespace-nowrap px-5 py-4 text-slate-600">S/ {{ arqueo.total_tarjeta|floatformat:2 }}</td>
+                        <td class="whitespace-nowrap px-5 py-4 text-slate-600">S/ {{ arqueo.total_transferencias|floatformat:2 }}</td>
+                        <td class="whitespace-nowrap px-5 py-4 font-semibold text-slate-800">{% if arqueo.monto_cierre_real is not None %}S/ {{ arqueo.monto_cierre_real|floatformat:2 }}{% else %}—{% endif %}</td>
+                        <td class="whitespace-nowrap px-5 py-4 {% if arqueo.diferencia < 0 %}text-rose-700{% elif arqueo.diferencia > 0 %}text-amber-700{% else %}text-emerald-700{% endif %}">S/ {{ arqueo.diferencia|floatformat:2 }}</td>
+                    </tr>
+                {% empty %}
+                    <tr><td colspan="9" class="px-5 py-12 text-center text-slate-500">Aún no hay cierres de caja registrados.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% if page_obj.has_other_pages %}
+        <nav class="flex items-center justify-between border-t border-slate-200 px-5 py-4 text-sm" aria-label="Paginación del historial de caja">
+            {% if page_obj.has_previous %}<a href="?page={{ page_obj.previous_page_number }}" class="font-semibold text-clinic-700">Anterior</a>{% else %}<span class="text-slate-400">Anterior</span>{% endif %}
+            <span class="text-slate-500">Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</span>
+            {% if page_obj.has_next %}<a href="?page={{ page_obj.next_page_number }}" class="font-semibold text-clinic-700">Siguiente</a>{% else %}<span class="text-slate-400">Siguiente</span>{% endif %}
+        </nav>
+    {% endif %}
+</section>
+{% endblock %}

@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+
+{% block title %}OptiVision{% endblock %}
+
+{% block content %}
+<section class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+    <div>
+        <p class="text-sm font-semibold uppercase tracking-wide text-clinic-700">Agenda clínica</p>
+        <h1 class="mt-1 text-3xl font-bold tracking-tight text-slate-900">Citas</h1>
+        <p class="mt-2 text-sm text-slate-600">Consulta y organiza las citas de oftalmología.</p>
+    </div>
+    <a href="{% url 'control:cita_create' %}" class="inline-flex items-center justify-center rounded-lg bg-clinic-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-clinic-700"><span class="mr-2 text-lg leading-none" aria-hidden="true">+</span> Nueva cita</a>
+</section>
+
+<section class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+    <form method="get" class="flex flex-col gap-3 border-b border-slate-200 p-4 sm:flex-row sm:items-center">
+        <label for="status-filter" class="text-sm font-medium text-slate-700">Filtrar por estado</label>
+        <select id="status-filter" name="estado" class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 outline-none focus:border-clinic-600 focus:ring-2 focus:ring-clinic-100">
+            <option value="">Todos los estados</option>
+            {% for value, label in estados %}
+                <option value="{{ value }}" {% if estado_seleccionado == value %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+        </select>
+        <button type="submit" class="rounded-lg bg-[#0f52ba] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#012a6b]">Aplicar</button>
+        {% if estado_seleccionado %}
+            <a href="{% url 'control:citas_list' %}" class="text-sm font-medium text-slate-600 hover:text-slate-900">Limpiar filtro</a>
+        {% endif %}
+    </form>
+
+    <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-slate-200 text-left text-sm">
+            <thead class="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
+                <tr><th scope="col" class="px-5 py-3 font-semibold">Fecha y hora</th><th scope="col" class="px-5 py-3 font-semibold">Paciente</th><th scope="col" class="px-5 py-3 font-semibold">Oftalmólogo</th><th scope="col" class="px-5 py-3 font-semibold">Motivo</th><th scope="col" class="px-5 py-3 font-semibold">Estado</th><th scope="col" class="px-5 py-3 text-right font-semibold">Atención</th></tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100">
+                {% for cita in page_obj %}
+                    <tr class="hover:bg-slate-50/70">
+                        <td class="whitespace-nowrap px-5 py-4 font-medium text-slate-700">{{ cita.fecha_hora|date:"d/m/Y H:i" }}</td>
+                        <td class="whitespace-nowrap px-5 py-4">
+                            {% if user.rol == 'ADMINISTRADOR' or user.is_superuser %}
+                                <a href="{% url 'control:paciente_detail' cita.paciente_id %}" class="font-semibold text-clinic-700 hover:text-clinic-900">{{ cita.paciente.nombre }} {{ cita.paciente.apellido }}</a>
+                            {% else %}
+                                <span class="font-semibold text-slate-800">{{ cita.paciente.nombre }} {{ cita.paciente.apellido }}</span>
+                            {% endif %}
+                            <div class="text-xs text-slate-500">DNI {{ cita.paciente.dni }}</div>
+                        </td>
+                        <td class="whitespace-nowrap px-5 py-4 text-slate-700">{{ cita.oftalmologo }}</td>
+                        <td class="max-w-xs px-5 py-4 text-slate-600">{{ cita.motivo_consulta|truncatewords:12 }}</td>
+                        <td class="whitespace-nowrap px-5 py-4">
+                            {% if cita.estado == 'PENDIENTE' %}
+                                <span class="rounded-full bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-700">{{ cita.get_estado_display }}</span>
+                            {% elif cita.estado == 'ATENDIDA' %}
+                                <span class="rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700">{{ cita.get_estado_display }}</span>
+                            {% else %}
+                                <span class="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600">{{ cita.get_estado_display }}</span>
+                            {% endif %}
+                        </td>
+                        <td class="whitespace-nowrap px-5 py-4 text-right">
+                            {% if cita.estado != 'CANCELADA' %}
+                                {% if user.rol == 'ADMINISTRADOR' or user.is_superuser %}
+                                    <a href="{% url 'control:consulta_form' cita.pk %}" class="font-semibold text-clinic-700 hover:text-clinic-900">{% if cita.estado == 'ATENDIDA' %}Ver / editar{% else %}Atender{% endif %}</a>
+                                {% else %}
+                                    <span class="text-xs text-slate-400">Solo administración</span>
+                                {% endif %}
+                            {% else %}
+                                <span class="text-xs text-slate-400">No disponible</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr><td colspan="6" class="px-5 py-12 text-center"><p class="font-medium text-slate-700">No hay citas para mostrar.</p><p class="mt-1 text-sm text-slate-500">Prueba otro filtro o agenda una nueva cita.</p></td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {% if page_obj.paginator.num_pages > 1 %}
+        <nav class="flex items-center justify-between border-t border-slate-200 px-4 py-3 sm:px-5" aria-label="Paginación">
+            <span class="text-sm text-slate-500">Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</span>
+            <div class="flex gap-2">
+                {% if page_obj.has_previous %}<a href="?estado={{ estado_seleccionado|urlencode }}&page={{ page_obj.previous_page_number }}" class="rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50">Anterior</a>{% endif %}
+                {% if page_obj.has_next %}<a href="?estado={{ estado_seleccionado|urlencode }}&page={{ page_obj.next_page_number }}" class="rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50">Siguiente</a>{% endif %}
+            </div>
+        </nav>
+    {% endif %}
+</section>
+{% endblock %}

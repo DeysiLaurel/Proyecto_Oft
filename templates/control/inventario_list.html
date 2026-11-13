@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+    <div>
+        <p class="text-sm font-semibold uppercase tracking-wide text-clinic-700">Almacén</p>
+        <h1 class="mt-1 text-3xl font-bold text-slate-900">Control de inventario</h1>
+        <p class="mt-2 text-sm text-slate-600">Existencias, alertas y valoración del almacén a precio de compra.</p>
+    </div>
+    <div class="flex flex-wrap gap-2">
+        <a href="{% url 'control:productos_list' %}" class="rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700">Ir al catálogo</a>
+        <a href="{% url 'control:inventario_export_csv' %}" class="rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700">Descargar CSV</a>
+    </div>
+</section>
+<section class="mb-5 grid gap-4 sm:grid-cols-2">
+    <article class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"><p class="text-sm text-slate-500">Valor de compra del almacén</p><p class="mt-2 text-2xl font-bold text-slate-900">S/ {{ valor_inventario|floatformat:2 }}</p></article>
+    <article class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"><p class="text-sm text-slate-500">Productos con stock crítico</p><p class="mt-2 text-2xl font-bold {% if productos_criticos %}text-amber-700{% else %}text-emerald-700{% endif %}">{{ productos_criticos }}</p></article>
+</section>
+<section class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+    <form method="get" class="flex gap-3 border-b border-slate-200 p-4">
+        <label for="stock-search" class="sr-only">Buscar producto</label>
+        <input id="stock-search" type="search" name="q" value="{{ query }}" placeholder="Buscar por nombre, marca o código" class="min-w-0 flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm">
+        <button class="rounded-lg bg-clinic-800 px-4 py-2 text-sm font-semibold text-white">Buscar</button>
+    </form>
+    <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-slate-200 text-left text-sm">
+            <thead class="bg-slate-50 text-xs uppercase text-slate-500">
+                <tr><th class="px-5 py-3">Producto</th><th class="px-5 py-3">Categoría</th><th class="px-5 py-3">Stock</th><th class="px-5 py-3">Costo unitario</th><th class="px-5 py-3">Valor en almacén</th><th class="px-5 py-3">Actualizar existencias</th></tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100">
+                {% for producto in page_obj %}
+                    <tr>
+                        <td class="px-5 py-4"><span class="font-semibold text-slate-900">{{ producto.nombre }}</span><span class="mt-1 block text-xs text-slate-500">{{ producto.codigo_barras }}</span></td>
+                        <td class="px-5 py-4 text-slate-600">{{ producto.categoria.nombre }}</td>
+                        <td class="px-5 py-4">
+                            {% if producto.stock_actual == 0 %}<span class="rounded-full bg-red-50 px-2.5 py-1 text-xs font-semibold text-red-700">Sin stock</span>
+                            {% elif producto.stock_actual <= producto.stock_minimo_alerta %}<span class="rounded-full bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-700">Bajo</span>
+                            {% else %}<span class="rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700">Disponible</span>{% endif %}
+                            <span class="ml-1 font-semibold">{{ producto.stock_actual }}</span>
+                            <span class="block text-xs text-slate-500">Mínimo: {{ producto.stock_minimo_alerta }}</span>
+                        </td>
+                        <td class="whitespace-nowrap px-5 py-4 text-slate-600">S/ {{ producto.precio_compra|floatformat:2 }}</td>
+                        <td class="whitespace-nowrap px-5 py-4 font-semibold text-slate-800">S/ {{ producto.valor_stock|floatformat:2 }}</td>
+                        <td class="px-5 py-4">
+                            <form method="post" action="{% url 'control:inventario_update_stock' producto.pk %}" class="flex min-w-[240px] items-end gap-2">
+                                {% csrf_token %}
+                                <label class="text-xs text-slate-500">Stock<input type="number" min="0" step="1" name="stock_actual" value="{{ producto.stock_actual }}" class="mt-1 block w-20 rounded border border-slate-300 px-2 py-1.5 text-sm"></label>
+                                <label class="text-xs text-slate-500">Mínimo<input type="number" min="0" step="1" name="stock_minimo_alerta" value="{{ producto.stock_minimo_alerta }}" class="mt-1 block w-20 rounded border border-slate-300 px-2 py-1.5 text-sm"></label>
+                                <button class="rounded-lg bg-clinic-800 px-3 py-2 text-xs font-semibold text-white">Guardar</button>
+                            </form>
+                        </td>
+                    </tr>
+                {% empty %}<tr><td colspan="6" class="px-5 py-10 text-center text-slate-500">No hay existencias para mostrar.</td></tr>{% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% if page_obj.has_other_pages %}
+        <nav class="flex items-center justify-between border-t border-slate-200 px-5 py-4 text-sm">
+            {% if page_obj.has_previous %}<a href="?q={{ query|urlencode }}&page={{ page_obj.previous_page_number }}" class="font-semibold text-clinic-700">Anterior</a>{% else %}<span class="text-slate-400">Anterior</span>{% endif %}
+            <span class="text-slate-500">Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</span>
+            {% if page_obj.has_next %}<a href="?q={{ query|urlencode }}&page={{ page_obj.next_page_number }}" class="font-semibold text-clinic-700">Siguiente</a>{% else %}<span class="text-slate-400">Siguiente</span>{% endif %}
+        </nav>
+    {% endif %}
+</section>
+{% endblock %}

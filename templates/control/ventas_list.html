@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block title %}OptiVision{% endblock %}
+
+{% block content %}
+<section class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+    <div>
+        <p class="text-sm font-semibold uppercase tracking-wide text-clinic-700">Operaciones</p>
+        <h1 class="mt-1 text-3xl font-bold tracking-tight text-slate-900">Ventas / POS</h1>
+        <p class="mt-2 text-sm text-slate-600">Consulta las transacciones registradas por el equipo.</p>
+    </div>
+    <div class="flex flex-wrap gap-2">
+        <a href="{% url 'control:arqueo_caja' %}" class="rounded-lg border border-slate-300 px-4 py-2.5 text-center text-sm font-semibold text-slate-700 hover:bg-slate-50">Caja y arqueo</a>
+        <a href="{% url 'control:venta_create' %}" class="rounded-lg bg-clinic-600 px-4 py-2.5 text-center text-sm font-semibold text-white hover:bg-clinic-700">Registrar venta</a>
+    </div>
+</section>
+<section class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+    <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-slate-200 text-left text-sm">
+            <thead class="bg-slate-50 text-xs uppercase tracking-wide text-slate-500"><tr><th class="px-5 py-3 font-semibold">Venta</th><th class="px-5 py-3 font-semibold">Paciente / Cajero</th><th class="px-5 py-3 font-semibold">Productos</th><th class="px-5 py-3 font-semibold">Pago</th><th class="px-5 py-3 font-semibold">Total</th><th class="px-5 py-3 font-semibold">Estado</th></tr></thead>
+            <tbody class="divide-y divide-slate-100">
+                {% for venta in page_obj %}
+                    <tr class="align-top hover:bg-slate-50/70">
+                        <td class="whitespace-nowrap px-5 py-4"><span class="font-semibold text-slate-900">#{{ venta.pk }}</span><div class="mt-1 text-xs text-slate-500">{{ venta.fecha_venta|date:"d/m/Y H:i" }}</div></td>
+                        <td class="whitespace-nowrap px-5 py-4"><div class="font-medium text-slate-800">{{ venta.paciente }}</div><div class="text-xs text-slate-500">Atendió {{ venta.usuario }}</div></td>
+                        <td class="px-5 py-4 text-slate-600">{% for detalle in venta.detalles.all %}<div>{{ detalle.cantidad }} × {{ detalle.producto.nombre }}</div>{% empty %}<span class="text-slate-400">Sin detalle</span>{% endfor %}</td>
+                        <td class="whitespace-nowrap px-5 py-4 text-slate-600">{{ venta.get_metodo_pago_display }}</td>
+                        <td class="whitespace-nowrap px-5 py-4 font-semibold text-slate-900">S/ {{ venta.total|floatformat:2 }}</td>
+                        <td class="whitespace-nowrap px-5 py-4">{% if venta.estado == 'COMPLETADA' %}<span class="rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700">{{ venta.get_estado_display }}</span>{% else %}<span class="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600">{{ venta.get_estado_display }}</span>{% endif %}</td>
+                    </tr>
+                {% empty %}
+                    <tr><td colspan="6" class="px-5 py-12 text-center"><p class="font-medium text-slate-700">Aún no hay ventas registradas.</p><p class="mt-1 text-sm text-slate-500">Las ventas completadas aparecerán aquí.</p></td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% if page_obj.paginator.num_pages > 1 %}<nav class="flex items-center justify-between border-t border-slate-200 px-4 py-3 sm:px-5" aria-label="Paginación"><span class="text-sm text-slate-500">Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</span><div class="flex gap-2">{% if page_obj.has_previous %}<a href="?page={{ page_obj.previous_page_number }}" class="rounded-lg border border-slate-300 px-3 py-1.5 text-sm text-slate-700">Anterior</a>{% endif %}{% if page_obj.has_next %}<a href="?page={{ page_obj.next_page_number }}" class="rounded-lg border border-slate-300 px-3 py-1.5 text-sm text-slate-700">Siguiente</a>{% endif %}</div></nav>{% endif %}
+</section>
+{% endblock %}

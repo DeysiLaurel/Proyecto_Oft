@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+
+{% block title %}OptiVision{% endblock %}
+
+{% block content %}
+<section class="mb-6">
+    <p class="text-sm font-semibold uppercase tracking-wide text-clinic-700">Caja y turnos</p>
+    <h1 class="mt-1 text-3xl font-bold tracking-tight text-slate-900">Arqueo de caja</h1>
+    <p class="mt-2 text-sm text-slate-600">Controla la apertura, los ingresos por medio de pago y el cierre de tu turno.</p>
+</section>
+
+{% if arqueo %}
+    <section class="mb-5 rounded-2xl border border-emerald-200 bg-emerald-50 p-5 sm:flex sm:items-center sm:justify-between">
+        <div><span class="inline-flex rounded-full bg-white px-3 py-1 text-xs font-semibold text-emerald-700">Turno abierto</span><h2 class="mt-3 text-lg font-semibold text-slate-900">Caja iniciada {{ arqueo.fecha_apertura|date:"d/m/Y H:i" }}</h2><p class="mt-1 text-sm text-slate-600">Monto inicial: S/ {{ arqueo.monto_inicial|floatformat:2 }}</p></div>
+    </section>
+
+    <section class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <article class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"><p class="text-sm text-slate-500">Monto inicial</p><p class="mt-2 text-2xl font-bold text-slate-900">S/ {{ arqueo.monto_inicial|floatformat:2 }}</p></article>
+        <article class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"><p class="text-sm text-slate-500">Ventas en efectivo</p><p class="mt-2 text-2xl font-bold text-slate-900">S/ {{ total_efectivo|floatformat:2 }}</p></article>
+        <article class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"><p class="text-sm text-slate-500">Ventas con tarjeta</p><p class="mt-2 text-2xl font-bold text-slate-900">S/ {{ total_tarjeta|floatformat:2 }}</p></article>
+        <article class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"><p class="text-sm text-slate-500">Transferencias (Yape/Plin)</p><p class="mt-2 text-2xl font-bold text-slate-900">S/ {{ total_transferencias|floatformat:2 }}</p></article>
+    </section>
+
+    <section class="mt-5 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+        <h2 class="font-semibold text-slate-900">Cerrar turno</h2>
+        <p class="mt-1 text-sm text-slate-600">Cuenta el efectivo físico. El efectivo esperado es el monto inicial más las ventas en efectivo; la diferencia compara ambos valores.</p>
+        <form method="post" action="{% url 'control:arqueo_caja_cerrar' arqueo.pk %}" class="mt-4 flex flex-col gap-3 sm:max-w-xl sm:flex-row sm:items-end">
+            {% csrf_token %}
+            <div class="flex-1"><label for="{{ cierre_form.monto_cierre_real.id_for_label }}" class="block text-sm font-medium text-slate-700">{{ cierre_form.monto_cierre_real.label }}</label>{{ cierre_form.monto_cierre_real }}{% for error in cierre_form.monto_cierre_real.errors %}<p class="mt-1 text-sm text-red-600">{{ error }}</p>{% endfor %}</div>
+            <button type="submit" class="rounded-lg bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-slate-700" onclick="return confirm('¿Cerrar el turno de caja?')">Cerrar caja</button>
+        </form>
+    </section>
+{% else %}
+    {% if ultimo_arqueo %}
+        <section class="mb-5 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                <div>
+                    <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Último turno cerrado</p>
+                    <h2 class="mt-1 font-semibold text-slate-900">{{ ultimo_arqueo.fecha_apertura|date:"d/m/Y H:i" }} – {{ ultimo_arqueo.fecha_cierre|date:"d/m/Y H:i" }}</h2>
+                </div>
+                {% if ultimo_arqueo.diferencia < 0 %}
+                    <span class="rounded-full bg-red-50 px-3 py-1 text-sm font-semibold text-red-700">Faltante: S/ {{ ultimo_arqueo.diferencia|floatformat:2 }}</span>
+                {% elif ultimo_arqueo.diferencia > 0 %}
+                    <span class="rounded-full bg-amber-50 px-3 py-1 text-sm font-semibold text-amber-700">Sobrante: S/ {{ ultimo_arqueo.diferencia|floatformat:2 }}</span>
+                {% else %}
+                    <span class="rounded-full bg-emerald-50 px-3 py-1 text-sm font-semibold text-emerald-700">Cuadre exacto</span>
+                {% endif %}
+            </div>
+            <div class="mt-4 grid gap-3 text-sm sm:grid-cols-2 lg:grid-cols-5">
+                <div><p class="text-slate-500">Efectivo esperado</p><p class="mt-1 font-semibold text-slate-900">S/ {{ ultimo_efectivo_esperado|floatformat:2 }}</p></div>
+                <div><p class="text-slate-500">Efectivo contado</p><p class="mt-1 font-semibold text-slate-900">S/ {{ ultimo_arqueo.monto_cierre_real|floatformat:2 }}</p></div>
+                <div><p class="text-slate-500">Ventas en efectivo</p><p class="mt-1 font-semibold text-slate-900">S/ {{ ultimo_arqueo.total_efectivo_ventas|floatformat:2 }}</p></div>
+                <div><p class="text-slate-500">Tarjeta</p><p class="mt-1 font-semibold text-slate-900">S/ {{ ultimo_arqueo.total_tarjeta|floatformat:2 }}</p></div>
+                <div><p class="text-slate-500">Yape/Plin</p><p class="mt-1 font-semibold text-slate-900">S/ {{ ultimo_arqueo.total_transferencias|floatformat:2 }}</p></div>
+            </div>
+        </section>
+    {% endif %}
+    <section class="mx-auto max-w-xl rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
+        <div class="mb-5 flex h-12 w-12 items-center justify-center rounded-xl bg-clinic-50 text-clinic-700" aria-hidden="true">
+            <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 10h18M5 10V6l7-3 7 3v4M5 10v10h14V10M9 14h6m-6 3h6"/></svg>
+        </div>
+        <h2 class="text-xl font-semibold text-slate-900">Abrir turno de caja</h2>
+        <p class="mt-2 text-sm text-slate-600">Registra el efectivo inicial disponible antes de comenzar a vender.</p>
+        <form method="post" class="mt-6 space-y-4">
+            {% csrf_token %}
+            <div><label for="{{ apertura_form.monto_inicial.id_for_label }}" class="block text-sm font-medium text-slate-700">{{ apertura_form.monto_inicial.label }}</label>{{ apertura_form.monto_inicial }}{% for error in apertura_form.monto_inicial.errors %}<p class="mt-1 text-sm text-red-600">{{ error }}</p>{% endfor %}</div>
+            <button type="submit" class="w-full rounded-lg bg-clinic-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-clinic-700">Abrir caja</button>
+        </form>
+    </section>
+{% endif %}
+{% endblock %}

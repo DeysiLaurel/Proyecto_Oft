@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+
+{% block title %}OptiVision{% endblock %}
+
+{% block content %}
+<section class="mx-auto max-w-4xl">
+    <a href="{% url 'control:citas_list' %}" class="text-sm font-medium text-clinic-700 hover:text-clinic-900">Volver a citas</a>
+    <div class="mb-6 mt-4">
+        <p class="text-sm font-semibold uppercase tracking-wide text-clinic-700">Módulo clínico</p>
+        <h1 class="mt-1 text-3xl font-bold tracking-tight text-slate-900">{% if consulta %}Editar consulta médica{% else %}Registrar atención{% endif %}</h1>
+        <p class="mt-2 text-sm text-slate-600">Registra la atención, los procedimientos realizados y la receta oftalmológica.</p>
+    </div>
+
+    <section class="mb-5 grid gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:grid-cols-3">
+        <div><p class="text-xs font-medium uppercase tracking-wide text-slate-500">Paciente</p><p class="mt-1 font-semibold text-slate-900">{{ cita.paciente.nombre }} {{ cita.paciente.apellido }}</p><p class="text-sm text-slate-500">DNI {{ cita.paciente.dni }}</p></div>
+        <div><p class="text-xs font-medium uppercase tracking-wide text-slate-500">Oftalmólogo</p><p class="mt-1 font-semibold text-slate-900">{{ cita.oftalmologo }}</p></div>
+        <div><p class="text-xs font-medium uppercase tracking-wide text-slate-500">Cita</p><p class="mt-1 font-semibold text-slate-900">{{ cita.fecha_hora|date:"d/m/Y H:i" }}</p><p class="text-sm text-slate-500">{{ cita.get_estado_display }}</p></div>
+        <div class="sm:col-span-3"><p class="text-xs font-medium uppercase tracking-wide text-slate-500">Motivo de consulta</p><p class="mt-1 text-sm text-slate-700">{{ cita.motivo_consulta }}</p></div>
+    </section>
+
+    <form method="post" class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-8">
+        {% csrf_token %}
+        {% if form.non_field_errors %}<div class="mb-5 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">{{ form.non_field_errors }}</div>{% endif %}
+        {% if procedimientos_formset.non_form_errors %}<div class="mb-5 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">{{ procedimientos_formset.non_form_errors }}</div>{% endif %}
+        <div class="space-y-5">
+            {% for field in form %}
+                <div><label for="{{ field.id_for_label }}" class="block text-sm font-medium text-slate-700">{{ field.label }}</label>{{ field }}{% if field.help_text %}<p class="mt-1 text-xs text-slate-500">{{ field.help_text }}</p>{% endif %}{% for error in field.errors %}<p class="mt-1 text-sm text-red-600">{{ error }}</p>{% endfor %}</div>
+            {% endfor %}
+        </div>
+        <section class="mt-8 rounded-2xl border border-clinic-100 bg-clinic-50/50 p-5">
+            <div class="mb-4">
+                <h2 class="font-semibold text-slate-900">Procedimientos y cirugías oftalmológicas</h2>
+                <p class="mt-1 text-sm text-slate-500">Registra el tipo de intervención, el ojo tratado, la fecha y las observaciones.</p>
+            </div>
+            {{ procedimientos_formset.management_form }}
+            <div class="space-y-4">
+                {% for procedimiento_form in procedimientos_formset %}
+                    <article class="rounded-xl border border-slate-200 bg-white p-4">
+                        {% for hidden in procedimiento_form.hidden_fields %}{{ hidden }}{% endfor %}
+                        <div class="grid gap-4 sm:grid-cols-2">
+                            {% for field in procedimiento_form.visible_fields %}
+                                <div class="{% if field.name == 'observaciones' %}sm:col-span-2{% endif %}">
+                                    {% if field.name == 'DELETE' %}<label for="{{ field.id_for_label }}" class="inline-flex items-center gap-2 text-sm font-medium text-rose-700">Eliminar este procedimiento</label>{% else %}<label for="{{ field.id_for_label }}" class="block text-sm font-medium text-slate-700">{{ field.label }}</label>{% endif %}
+                                    {{ field }}
+                                    {% for error in field.errors %}<p class="mt-1 text-sm text-red-600">{{ error }}</p>{% endfor %}
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </article>
+                {% endfor %}
+            </div>
+        </section>
+        <div class="mt-8 flex flex-col-reverse gap-3 border-t border-slate-100 pt-5 sm:flex-row sm:justify-end">
+            <a href="{% url 'control:citas_list' %}" class="rounded-lg border border-slate-300 px-4 py-2.5 text-center text-sm font-semibold text-slate-700 hover:bg-slate-50">Cancelar</a>
+            <button type="submit" class="rounded-lg bg-clinic-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-clinic-700">{% if consulta %}Guardar consulta y continuar{% else %}Registrar atención y continuar{% endif %}</button>
+        </div>
+    </form>
+</section>
+{% endblock %}

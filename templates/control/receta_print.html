@@ -1,0 +1,75 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OptiVision</title>
+    <style>
+        :root { color-scheme: light; font-family: Arial, sans-serif; color: #172033; }
+        body { margin: 0; background: #f1f5f9; }
+        .toolbar { max-width: 760px; margin: 24px auto 12px; display: flex; justify-content: space-between; gap: 12px; }
+        .toolbar a, .toolbar button { border: 1px solid #cbd5e1; border-radius: 8px; padding: 10px 14px; background: white; color: #1d4ed8; font-size: 14px; font-weight: 600; text-decoration: none; cursor: pointer; }
+        .sheet { box-sizing: border-box; max-width: 760px; margin: 0 auto 32px; padding: 48px; background: white; border: 1px solid #e2e8f0; border-radius: 14px; }
+        header { padding-bottom: 20px; border-bottom: 2px solid #2563eb; }
+        header img { display: block; width: 210px; height: auto; }
+        header p { margin: 6px 0 0; color: #64748b; font-size: 13px; }
+        h2 { margin: 28px 0 12px; font-size: 16px; }
+        .patient { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 24px; margin-top: 20px; font-size: 14px; }
+        .label { display: block; margin-bottom: 4px; color: #64748b; font-size: 11px; text-transform: uppercase; letter-spacing: .05em; }
+        table { width: 100%; border-collapse: collapse; font-size: 14px; }
+        th, td { padding: 12px; border: 1px solid #cbd5e1; text-align: center; }
+        th { background: #eff6ff; color: #1e3a8a; }
+        td:first-child, th:first-child { text-align: left; }
+        .additional { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; font-size: 14px; }
+        .signature { margin-top: 72px; display: flex; justify-content: flex-end; }
+        .signature div { min-width: 220px; padding-top: 10px; border-top: 1px solid #475569; text-align: center; font-size: 12px; }
+        @media print {
+            body { background: white; }
+            .toolbar { display: none; }
+            .sheet { max-width: none; margin: 0; padding: 24px; border: 0; border-radius: 0; }
+            @page { margin: 16mm; }
+        }
+        @media (max-width: 640px) {
+            .sheet { margin: 12px; padding: 24px; }
+            .toolbar { margin: 12px; }
+            .patient { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <nav class="toolbar" aria-label="Acciones de receta">
+        <a href="{% url 'control:paciente_detail' receta.paciente_id %}">Volver a la ficha</a>
+        <a href="{% url 'control:receta_pdf' receta.pk %}">Descargar PDF</a>
+        <button type="button" onclick="window.print()">Imprimir / Guardar PDF</button>
+    </nav>
+    <main class="sheet">
+        <header>
+            <img src="{% static 'brand/optivision-logo.svg' %}" alt="OptiVision">
+            <p>Receta oftalmológica · Emitida el {{ receta.fecha_emision|date:"d/m/Y" }}</p>
+        </header>
+        <section class="patient" aria-label="Datos del paciente">
+            <div><span class="label">Paciente</span>{{ receta.paciente.nombre }} {{ receta.paciente.apellido }}</div>
+            <div><span class="label">DNI</span>{{ receta.paciente.dni }}</div>
+            <div><span class="label">Oftalmólogo</span>{{ receta.oftalmologo.nombre }} {{ receta.oftalmologo.apellido }}</div>
+            <div><span class="label">Colegiatura</span>{{ receta.oftalmologo.numero_colegiatura }}</div>
+            <div><span class="label">Fecha de consulta</span>{{ receta.consulta.fecha_atencion|date:"d/m/Y" }}</div>
+        </section>
+        <h2>Graduación</h2>
+        <table>
+            <thead><tr><th>Ojo</th><th>Esfera</th><th>Cilindro</th><th>Eje</th></tr></thead>
+            <tbody>
+                <tr><th>OD · Derecho</th><td>{{ receta.esfera_od }}</td><td>{{ receta.cilindro_od }}</td><td>{{ receta.eje_od }}°</td></tr>
+                <tr><th>OI · Izquierdo</th><td>{{ receta.esfera_oi }}</td><td>{{ receta.cilindro_oi }}</td><td>{{ receta.eje_oi }}°</td></tr>
+            </tbody>
+        </table>
+        <h2>Indicaciones</h2>
+        <section class="additional">
+            <div><span class="label">Adición</span>{{ receta.adicion|default_if_none:"—" }}</div>
+            <div><span class="label">Distancia pupilar</span>{{ receta.distancia_pupilar|default_if_none:"—" }}{% if receta.distancia_pupilar is not None %} mm{% endif %}</div>
+            <div><span class="label">Tipo de lente sugerido</span>{{ receta.tipo_lente_sugerido|default:"—" }}</div>
+        </section>
+        <div class="signature"><div>{{ receta.oftalmologo.nombre }} {{ receta.oftalmologo.apellido }}<br>{{ receta.oftalmologo.numero_colegiatura }}</div></div>
+    </main>
+</body>
+</html>
